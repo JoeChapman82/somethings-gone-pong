@@ -9,11 +9,23 @@ document.ready = (function() {
     var mainTimer = 0;
     var playerScore = 0;
     var cpuScore = 0;
+    var startTimer = 3;
+    var aiTimerStart = 1;
+    var aiTimer = 1;
+    var aiCanMove = true;
+    var halfPaddleHeight = 125;
+    var countDownArray = ['GO!', '1', '2', '3'];
     var activeScreen = 'staticScreen';
+    // var activeScreen = 'gameScreen';
+    var upPressed = false;
+    var downPressed = false;
     var ballClicked = false;
     var allFaded = false;
     var paddlesResized = false;
     var paddlesRotated = false;
+    var coloursInverted = false;
+    var gameReady = false;
+    var gamePlaying = false;
     var paddleHeight = 40;
     var paddleWidth = 250;
     var rotation = 0.1;
@@ -103,6 +115,24 @@ document.ready = (function() {
     lion.src = '../images/lion.png';
 
     document.addEventListener('click', isBallClicked);
+    document.addEventListener('keydown', function(e) {
+        if(e.keyCode === 38) {
+            e.preventDefault();
+            upPressed = true;
+        } else if(e.keyCode === 40) {
+            e.preventDefault();
+            downPressed = true;
+        }
+    });
+    document.addEventListener('keyup', function(e) {
+        if(e.keyCode === 38) {
+            e.preventDefault();
+            upPressed = false;
+        } else if(e.keyCode === 40) {
+            e.preventDefault();
+            downPressed = false;
+        }
+    });
 
 
     var switchHSLBackground = 100;
@@ -116,12 +146,12 @@ document.ready = (function() {
         return (width / 16) * num;
     }
 
-    (function start(time) {
+    function start(time) {
         deltaTime = (time - lastTime) / 1000;
         lastTime = time;
         drawloop = requestAnimationFrame(start);
         screenMap[activeScreen]();
-    }());
+    }
 
     function stop() {
         cancelAnimationFrame(drawloop);
@@ -133,6 +163,13 @@ document.ready = (function() {
         } else {
             start();
         }
+    }
+
+    function delay(time) {
+        stop();
+        setTimeout(function() {
+            start();
+        }, time);
     }
 
     function staticScreen() {
@@ -161,6 +198,22 @@ document.ready = (function() {
     }
 
     function gameScreen() {
+        // if(!gamePlaying) {
+        //     resetGame();
+        //     gamePlaying = true;
+        // }
+        ctx.clearRect(0, 0, width, height);
+        drawBackground();
+        updateBall();
+        keepBallInBounds();
+        checkGoals();
+        checkPaddleBallCollisions();
+        managePlayerPaddle();
+        ai();
+        drawScores();
+        drawBall();
+        drawPlayerPaddle();
+        drawCpuPaddle();
     }
 
 
@@ -230,30 +283,6 @@ document.ready = (function() {
         ctx.fillText('roar', ww(12.7), wh(6.6));
     }
 
-    function drawBall() {
-        ctx.beginPath();
-        ctx.rect(ball.x, ball.y, ball.width, ball.height);
-        ctx.fillStyle = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    function drawPlayerPaddle() {
-        ctx.beginPath();
-        ctx.rect(playerPaddle.x, playerPaddle.y, playerPaddle.width, playerPaddle.height);
-        ctx.fillStyle = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    function drawCpuPaddle() {
-        ctx.beginPath();
-        ctx.rect(cpuPaddle.x, cpuPaddle.y, cpuPaddle.width, cpuPaddle.height);
-        ctx.fillStyle = cpuPaddle.colour;
-        ctx.fill();
-        ctx.closePath();
-    }
-
     function introManager() {
         if(!allFaded) {
             drawPlayerPaddle();
@@ -279,8 +308,16 @@ document.ready = (function() {
                     drawScores();
                     if(alphas.cpuScore >= 1) {
                         invertColours();
+                        if(coloursInverted) {
+                            dustyBin();
+                            if(gameReady) {
+                                resetGame();
+                                gamePlaying = true;
+                                activeScreen = 'gameScreen';
+                            }
+                        }
                     }
-                }
+                } // wheeeeee
             }
         }
 
@@ -386,6 +423,23 @@ document.ready = (function() {
         if(switchHSLForeground < 100) {
             switchHSLForeground += 0.5;
         }
+        if(switchHSLForeground >= 100) {
+            coloursInverted = true;
+        }
+    }
+
+    function dustyBin() {
+        startTimer -= deltaTime;
+        if(countDownArray[Math.ceil(startTimer)] !== undefined) {
+            let countDownText = countDownArray[Math.ceil(startTimer)];
+            ctx.font = 'bold 120px Arial Black';
+            ctx.fillStyle = cpuScoreColour;
+            ctx.textAlign = "center";
+            ctx.fillText(countDownText, canvas.width / 2, canvas.height / 2);
+        } else {
+            gameReady = true;
+        }
+
     }
 
     function keepBallInIntroBounds() {
@@ -398,18 +452,26 @@ document.ready = (function() {
         if(ball.y < 0 || ball.y > canvas.height - ball.height) {
             ball.vy = -ball.vy;
         }
+        if(ball.y < 0) {
+            ball.y = 0;
+        } else if(ball.y > canvas.height - ball.height) {
+            ball.y = canvas.height - ball.height;
+        }
     }
 
-    function drawScores() {
-        ctx.font = 'bold 72px Arial Black';
-        ctx.fillStyle = cpuScoreColour;
-        ctx.textAlign = "start";
-        ctx.fillText('CPU: ' + cpuScore, ww(13.2), wh(0.75));
-
-        ctx.font = 'bold 72px Arial Black';
-        ctx.fillStyle = playerScoreColour;
-        ctx.textAlign = "start";
-        ctx.fillText('Player: ' + playerScore, ww(0.5), wh(0.75));
+    function checkGoals() {
+        if(ball.x < 0) {
+            cpuScore++;
+            delay(2000);
+            resetBall();
+            resetGame();
+        }
+        if(ball.x > canvas.width - ball.width) {
+            playerScore++;
+            delay(2000);
+            resetBall();
+            resetGame();
+        }
     }
 
     function drawCentralLine() {
@@ -430,7 +492,141 @@ document.ready = (function() {
     }
 }
 
+    function resetGame() {
+        var num = Math.random() * (6 - 1) + 1;
+        num *= Math.floor(Math.random() * 2) === 1 ? 1 : -1;
+
+        playerPaddle.x = ww(0.49);
+        playerPaddle.y = wh(3.47);
+        playerPaddle.width = 40;
+        playerPaddle.height = 250;
+
+        cpuPaddle.x = ww(15.17);
+        cpuPaddle.y = wh(3.45);
+        cpuPaddle.width = 40;
+        cpuPaddle.height = 250;
+        switchHSLBackground = 0;
+        switchHSLForeground = 100;
+        cpuScoreColour = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
+        playerScoreColour = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
+        cpuPaddle.colour = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
+        playerPaddle.colour = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
+        ball.width = 45;
+        ball.height = 45;
+        if(ball.vx < 6) {
+            ball.vx = 6;
+        }
+        if(ball.vy > -6) {
+            ball.vy = num;
+        }
+        startTimer = 3;
+    }
+
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+    }
+
+    // game functions
+    function drawBackground() {
+        ctx.beginPath();
+        ctx.rect(0, 0, width, height);
+        ctx.fillStyle = 'hsl(0, 0%, ' + switchHSLBackground + '%)';
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawScores() {
+        ctx.font = 'bold 72px Arial Black';
+        ctx.fillStyle = cpuScoreColour;
+        ctx.textAlign = "start";
+        ctx.fillText('CPU: ' + cpuScore, ww(12.4), wh(0.75));
+
+        ctx.font = 'bold 72px Arial Black';
+        ctx.fillStyle = playerScoreColour;
+        ctx.textAlign = "start";
+        ctx.fillText('Player: ' + playerScore, ww(1), wh(0.75));
+    }
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.rect(ball.x, ball.y, ball.width, ball.height);
+        ctx.fillStyle = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawPlayerPaddle() {
+        ctx.beginPath();
+        ctx.rect(playerPaddle.x, playerPaddle.y, playerPaddle.width, playerPaddle.height);
+        ctx.fillStyle = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawCpuPaddle() {
+        ctx.beginPath();
+        ctx.rect(cpuPaddle.x, cpuPaddle.y, cpuPaddle.width, cpuPaddle.height);
+        ctx.fillStyle = cpuPaddle.colour;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function managePlayerPaddle() {
+        if(upPressed) {
+            playerPaddle.y -= 3;
+        } else if(downPressed) {
+            playerPaddle.y += 3;
+        }
+        if(playerPaddle.y < 0) {
+            playerPaddle.y = 0;
+        } else if(playerPaddle.y > canvas.height - playerPaddle.height) {
+            playerPaddle.y = canvas.height - playerPaddle.height;
+        }
+    }
+
+    function ai() {
+        if(ball.y > cpuPaddle.y && ball.y < cpuPaddle.y + cpuPaddle.height) {
+            return;
+        }
+        if(ball.y > cpuPaddle.y + cpuPaddle.height / 2) {
+            cpuPaddle.y += 3.5;
+        } else if (ball.y < cpuPaddle.y + cpuPaddle.height / 2) {
+            cpuPaddle.y -= 3.5;
+        }
+        if(cpuPaddle.y < 0) {
+            cpuPaddle.y = 0;
+        } else if(cpuPaddle.y > canvas.height - cpuPaddle.height) {
+            cpuPaddle.y = canvas.height - cpuPaddle.height;
+        }
+    }
+
+    function checkPaddleBallCollisions() {
+        if(checkCollisions(ball, playerPaddle)) {
+            console.log(ball.vx);
+            ball.vx = 6;
+            ball.vy = ((ball.y + ball.height / 2) - (playerPaddle.y + playerPaddle.height / 2)) / (halfPaddleHeight + ball.height / 2) * 6;
+        }
+        if(checkCollisions(ball, cpuPaddle)) {
+            ball.vx = -6;
+            console.log(ball.vx);
+
+            ball.vy = ((ball.y + ball.height / 2) - (cpuPaddle.y + cpuPaddle.height / 2)) / (halfPaddleHeight + ball.height / 2) * 6;
+        }
+
+    }
 
 
+    function checkCollisions(item, ob) {
+        var isColliding;
+        if(item.x + item.width >= ob.x && item.x <= ob.x + ob.width && item.y + item.height >= ob.y && item.y <= ob.y + ob.height) {
+            isColliding = true;
+        }
+        return isColliding;
+    }
+
+
+
+    start();
 
 }());
