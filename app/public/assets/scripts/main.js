@@ -482,7 +482,7 @@ document.ready = (function() {
 
     function checkGoals() {
         if(ball.x < 0) {
-            if(cpuScore === 2) {
+            if(cpuScore === 4) {
                 drawWinLose('cpu');
                 delay(5000);
                 cpuScore = 0;
@@ -495,7 +495,7 @@ document.ready = (function() {
             resetGame();
         }
         if(ball.x > canvas.width - ball.width) {
-            if(playerScore === 2) {
+            if(playerScore === 4) {
                 drawWinLose('player');
                 delay(5000);
                 playerScore = 0;
