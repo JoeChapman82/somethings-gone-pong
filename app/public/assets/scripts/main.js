@@ -137,8 +137,8 @@ document.ready = (function() {
 
     document.addEventListener('touchstart', function(e) {
         var gcbr = canvas.getBoundingClientRect();
-        var cx = e.clientX;
-        var cy = e.clientY;
+        var cx = e.touches[0].clientX;
+        var cy = e.touches[0].clientY;
         if(cy > gcbr.bottom - gcbr.top / 2) {
             upPressed = true;
         } else {
