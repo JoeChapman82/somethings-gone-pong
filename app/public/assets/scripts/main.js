@@ -12,9 +12,12 @@ document.ready = (function() {
     var startTimer = 3;
     var aiTimerStart = 1;
     var aiTimer = 1;
+    var bounceSound = document.createElement('audio');
+    bounceSound.src = '../audio/bounce.wav';
     var aiCanMove = true;
     var halfPaddleHeight = 125;
     var countDownArray = ['GO!', '1', '2', '3'];
+    // var activeScreen = 'gameScreen';
     var activeScreen = 'staticScreen';
     var upPressed = false;
     var downPressed = false;
@@ -465,6 +468,7 @@ document.ready = (function() {
 
     function keepBallInIntroBounds() {
         if(ball.y < playerPaddle.y + playerPaddle.height || ball.y > cpuPaddle.y - ball.height) {
+            bounceSound.play();
             ball.vy = -ball.vy;
         }
     }
@@ -472,6 +476,7 @@ document.ready = (function() {
     function keepBallInBounds() {
         if(ball.y < 0 || ball.y > canvas.height - ball.height) {
             ball.vy = -ball.vy;
+            bounceSound.play();
         }
         if(ball.y < 0) {
             ball.y = 0;
@@ -648,14 +653,13 @@ document.ready = (function() {
 
     function checkPaddleBallCollisions() {
         if(checkCollisions(ball, playerPaddle)) {
-            console.log(ball.vx);
+            bounceSound.play();
             ball.vx = 6;
             ball.vy = ((ball.y + ball.height / 2) - (playerPaddle.y + playerPaddle.height / 2)) / (halfPaddleHeight + ball.height / 2) * 6;
         }
         if(checkCollisions(ball, cpuPaddle)) {
+            bounceSound.play();
             ball.vx = -6;
-            console.log(ball.vx);
-
             ball.vy = ((ball.y + ball.height / 2) - (cpuPaddle.y + cpuPaddle.height / 2)) / (halfPaddleHeight + ball.height / 2) * 6;
         }
 
