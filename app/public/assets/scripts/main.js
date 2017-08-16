@@ -15,8 +15,7 @@ document.ready = (function() {
     var aiCanMove = true;
     var halfPaddleHeight = 125;
     var countDownArray = ['GO!', '1', '2', '3'];
-    // var activeScreen = 'staticScreen';
-    var activeScreen = 'gameScreen';
+    var activeScreen = 'staticScreen';
     var upPressed = false;
     var downPressed = false;
     var ballClicked = false;
@@ -138,12 +137,10 @@ document.ready = (function() {
     document.addEventListener('touchstart', function(e) {
         var gcbr = canvas.getBoundingClientRect();
         var cy = e.touches[0].clientY;
-        var r = ctx.canvas.clientWidth / canvas.width; // the ratio of the canvas actual width to it's original width
-        var rh = ctx.canvas.clientHeight / canvas.height; // as above, for height
         if(cy > (gcbr.top + gcbr.bottom / 2)) {
-            upPressed = true;
-        } else {
             downPressed = true;
+        } else {
+            upPressed = true;
         }
     });
 
@@ -222,10 +219,10 @@ document.ready = (function() {
     }
 
     function gameScreen() {
-        if(!gamePlaying) {
-            resetGame();
-            gamePlaying = true;
-        }
+        // if(!gamePlaying) {
+        //     resetGame();
+        //     gamePlaying = true;
+        // }
         ctx.clearRect(0, 0, width, height);
         drawBackground();
         updateBall();
