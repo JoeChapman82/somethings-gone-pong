@@ -15,8 +15,8 @@ document.ready = (function() {
     var aiCanMove = true;
     var halfPaddleHeight = 125;
     var countDownArray = ['GO!', '1', '2', '3'];
-    var activeScreen = 'staticScreen';
-    // var activeScreen = 'gameScreen';
+    // var activeScreen = 'staticScreen';
+    var activeScreen = 'gameScreen';
     var upPressed = false;
     var downPressed = false;
     var ballClicked = false;
@@ -115,6 +115,7 @@ document.ready = (function() {
     lion.src = '../images/lion.png';
 
     document.addEventListener('click', isBallClicked);
+    document.addEventListener('touchstart', isBallClicked);
     document.addEventListener('keydown', function(e) {
         if(e.keyCode === 38) {
             e.preventDefault();
@@ -131,6 +132,28 @@ document.ready = (function() {
         } else if(e.keyCode === 40) {
             e.preventDefault();
             downPressed = false;
+        }
+    });
+
+    document.addEventListener('touchstart', function(e) {
+        var gcbr = canvas.getBoundingClientRect();
+        var cx = e.clientX;
+        var cy = e.clientY;
+        if(cy > gcbr.bottom - gcbr.top / 2) {
+            upPressed = true;
+        } else {
+            downPressed = true;
+        }
+    });
+
+    document.addEventListener('touchend', function(e) {
+        upPressed = false;
+        downPressed = false;
+    });
+
+    document.addEventListener('touchmove', function(e) {
+        if(gamePlaying) {
+            e.preventDefault();
         }
     });
 
@@ -198,10 +221,10 @@ document.ready = (function() {
     }
 
     function gameScreen() {
-        // if(!gamePlaying) {
-        //     resetGame();
-        //     gamePlaying = true;
-        // }
+        if(!gamePlaying) {
+            resetGame();
+            gamePlaying = true;
+        }
         ctx.clearRect(0, 0, width, height);
         drawBackground();
         updateBall();
@@ -431,7 +454,7 @@ document.ready = (function() {
     function dustyBin() {
         startTimer -= deltaTime;
         if(countDownArray[Math.ceil(startTimer)] !== undefined) {
-            let countDownText = countDownArray[Math.ceil(startTimer)];
+            var countDownText = countDownArray[Math.ceil(startTimer)];
             ctx.font = 'bold 120px Arial Black';
             ctx.fillStyle = cpuScoreColour;
             ctx.textAlign = "center";
@@ -461,17 +484,39 @@ document.ready = (function() {
 
     function checkGoals() {
         if(ball.x < 0) {
-            cpuScore++;
-            delay(2000);
+            if(cpuScore === 2) {
+                drawWinLose('cpu');
+                delay(5000);
+                cpuScore = 0;
+                playerScore = 0;
+            } else {
+                cpuScore++;
+                delay(2000);
+            }
             resetBall();
             resetGame();
         }
         if(ball.x > canvas.width - ball.width) {
-            playerScore++;
-            delay(2000);
-            resetBall();
+            if(playerScore === 2) {
+                drawWinLose('player');
+                delay(5000);
+                playerScore = 0;
+                cpuScore = 0;
+            } else {
+                playerScore++;
+                delay(2000);
+            }
             resetGame();
+            resetBall();
         }
+    }
+
+    function drawWinLose(x) {
+        var text = x === 'cpu' ? 'lose :(' : 'win!';
+        ctx.font = 'bold 120px Arial Black';
+        ctx.fillStyle = cpuScoreColour;
+        ctx.textAlign = "center";
+        ctx.fillText('You ' + text, canvas.width / 2, canvas.height / 2);
     }
 
     function drawCentralLine() {
@@ -479,6 +524,7 @@ document.ready = (function() {
     }
 
     function isBallClicked(e) {
+    e = e.touches[0] !== undefined ? e.touches[0] : e;
     if(!ballClicked) {
         var gcbr = canvas.getBoundingClientRect();
         var cx = e.clientX;
@@ -495,7 +541,8 @@ document.ready = (function() {
     function resetGame() {
         var num = Math.random() * (6 - 1) + 1;
         num *= Math.floor(Math.random() * 2) === 1 ? 1 : -1;
-
+        var numx = 6;
+        numx *= Math.floor(Math.random() * 2) === 1 ? 1 : -1;
         playerPaddle.x = ww(0.49);
         playerPaddle.y = wh(3.47);
         playerPaddle.width = 40;
@@ -513,12 +560,12 @@ document.ready = (function() {
         playerPaddle.colour = 'hsl(0, 0%, ' + switchHSLForeground + '%)';
         ball.width = 45;
         ball.height = 45;
-        if(ball.vx < 6) {
-            ball.vx = 6;
-        }
-        if(ball.vy > -6) {
+        // if(ball.vx < 6) {
+            ball.vx = numx;
+        // }
+        // if(ball.vy > -6) {
             ball.vy = num;
-        }
+        // }
         startTimer = 3;
     }
 
