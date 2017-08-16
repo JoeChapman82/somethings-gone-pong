@@ -140,7 +140,7 @@ document.ready = (function() {
         var cy = e.touches[0].clientY;
         var r = ctx.canvas.clientWidth / canvas.width; // the ratio of the canvas actual width to it's original width
         var rh = ctx.canvas.clientHeight / canvas.height; // as above, for height
-        if(cy > (gcbr.top + gcbr.bottom / 2) * rh) {
+        if(cy > (gcbr.top + gcbr.bottom / 2)) {
             upPressed = true;
         } else {
             downPressed = true;
