@@ -522,7 +522,7 @@ document.ready = (function() {
     }
 
     function isBallClicked(e) {
-    e = e.touches[0] !== undefined ? e.touches[0] : e;
+    e = e.touches !== undefined ? e.touches[0] : e;
     if(!ballClicked) {
         var gcbr = canvas.getBoundingClientRect();
         var cx = e.clientX;
